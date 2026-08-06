@@ -1,0 +1,367 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1420;
+    --panel:#161F30;
+    --panel-edge:#1F2C42;
+    --flap:#F1ECDD;
+    --flap-shadow:#B9B29B;
+    --ink:#171512;
+    --amber:#E3A23D;
+    --teal:#4F8B8A;
+    --muted:#8C97AC;
+    --danger:#C2634B;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:0;background:transparent;color:var(--flap);font-family:'IBM Plex Mono',monospace;}
+  .board{
+    max-width:720px;margin:0 auto;background:var(--bg);
+    border:1px solid var(--panel-edge);border-radius:6px;
+    padding:28px 28px 20px;
+  }
+  .board-header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--amber);padding-bottom:14px;margin-bottom:22px;
+  }
+  .board-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:26px;letter-spacing:0.5px;color:var(--flap);text-transform:uppercase;}
+  .board-sub{font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:4px;text-transform:uppercase;}
+  .counter{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--amber);
+    border:1px solid var(--amber);border-radius:3px;padding:5px 10px;white-space:nowrap;
+  }
+  .row{margin-bottom:22px;}
+  .row-label{
+    font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:2px;color:var(--teal);
+    text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;
+  }
+  .row-label::before{content:'';width:16px;height:2px;background:var(--teal);display:inline-block;}
+  .flap-wrap{perspective:800px;}
+  .flap{
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:4px;
+    min-height:64px;
+    display:flex;align-items:center;justify-content:center;
+    padding:6px 16px;
+    position:relative;overflow:hidden;
+  }
+  .flap::after{
+    content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:var(--bg);
+  }
+  .flap-text{
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:22px;letter-spacing:1px;
+    color:var(--flap);text-transform:uppercase;text-align:center;
+    transform-origin:center center;
+  }
+  .flap-text.flip{animation:flipdown 0.11s ease-in;}
+  @keyframes flipdown{
+    0%{transform:rotateX(0deg);}
+    50%{transform:rotateX(-90deg);opacity:0.4;}
+    51%{transform:rotateX(90deg);}
+    100%{transform:rotateX(0deg);}
+  }
+  .placeholder{color:var(--muted);font-size:14px;letter-spacing:1px;}
+  .controls{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center;}
+  button{
+    font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+    font-size:13px;background:var(--amber);color:var(--ink);border:none;border-radius:3px;
+    padding:10px 18px;cursor:pointer;transition:filter 0.15s;
+  }
+  button:hover:not(:disabled){filter:brightness(1.08);}
+  button:disabled{background:var(--panel-edge);color:var(--muted);cursor:not-allowed;}
+  button.secondary{background:transparent;border:1px solid var(--muted);color:var(--muted);}
+  button.danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .city-input-wrap{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  input[type=text]{
+    font-family:'IBM Plex Mono',monospace;background:var(--panel);border:1px solid var(--panel-edge);
+    color:var(--flap);border-radius:3px;padding:9px 10px;font-size:13px;flex:1;min-width:160px;
+  }
+  input[type=text]:focus{outline:1px solid var(--teal);}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .chip{
+    background:var(--panel);border:1px solid var(--panel-edge);color:var(--flap);
+    font-size:12px;padding:5px 9px;border-radius:20px;display:flex;align-items:center;gap:6px;
+  }
+  .chip button{padding:0;background:none;color:var(--danger);font-size:14px;line-height:1;}
+  .guide{
+    background:var(--panel);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;
+    padding:16px 18px;margin-top:6px;display:none;
+  }
+  .guide.show{display:block;}
+  .guide-label{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:6px;}
+  .guide-text{font-size:13px;line-height:1.6;color:var(--flap);}
+  .footer{margin-top:22px;padding-top:16px;border-top:1px solid var(--panel-edge);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .history-toggle{font-size:11px;color:var(--muted);cursor:pointer;letter-spacing:1px;text-transform:uppercase;}
+  .history-list{display:none;margin-top:12px;font-size:12px;color:var(--muted);max-height:150px;overflow-y:auto;}
+  .history-list.show{display:block;}
+  .history-item{padding:6px 0;border-bottom:1px solid var(--panel-edge);}
+  .history-item b{color:var(--flap);}
+  @media (prefers-reduced-motion: reduce){
+    .flap-text.flip{animation:none;}
+  }
+</style>
+
+<div class="board">
+  <div class="board-header">
+    <div>
+      <div class="board-title">Sorteo Cultural</div>
+      <div class="board-sub">País · Categoría · Ciudad</div>
+    </div>
+    <div class="counter" id="counter">— / 193</div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">País</div>
+    <div class="flap-wrap"><div class="flap"><div class="flap-text placeholder" id="flap-pais">Pendiente</div></div></div>
+    <div class="controls">
+      <button id="btn-pais">Girar país</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">Categoría</div>
+    <div class="flap-wrap"><div class="flap"><div class="flap-text placeholder" id="flap-cat">Pendiente</div></div></div>
+    <div class="controls">
+      <button id="btn-cat" disabled>Girar categoría</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">Ciudad</div>
+    <div class="flap-wrap"><div class="flap"><div class="flap-text placeholder" id="flap-ciudad">Pendiente</div></div></div>
+    <div class="controls" id="city-input-controls" style="display:none;">
+      <div style="width:100%;">
+        <div class="city-input-wrap">
+          <input type="text" id="city-input" placeholder="Escribe una ciudad candidata y presiona Enter" />
+        </div>
+        <div class="chips" id="city-chips"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="btn-ciudad" disabled>Girar ciudad</button>
+    </div>
+  </div>
+
+  <div class="guide" id="guide">
+    <div class="guide-label">Guía de investigación</div>
+    <div class="guide-text" id="guide-text"></div>
+  </div>
+
+  <div class="footer">
+    <button class="danger" id="btn-reset">Reiniciar todo</button>
+    <span class="history-toggle" id="history-toggle">Ver historial ▾</span>
+  </div>
+  <div class="history-list" id="history-list"></div>
+</div>
+
+<script>
+(function(){
+  const countries = ["Afganistán","Albania","Argelia","Andorra","Angola","Antigua y Barbuda","Argentina","Armenia","Australia","Austria","Azerbaiyán","Bahamas","Baréin","Bangladés","Barbados","Bielorrusia","Bélgica","Belice","Benín","Bután","Bolivia","Bosnia y Herzegovina","Botsuana","Brasil","Brunéi","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Camboya","Camerún","Canadá","República Centroafricana","Chad","Chile","China","Colombia","Comoras","Congo","Costa Rica","Croacia","Cuba","Chipre","República Checa","República Democrática del Congo","Dinamarca","Yibuti","Dominica","República Dominicana","Ecuador","Egipto","El Salvador","Guinea Ecuatorial","Eritrea","Estonia","Esuatini","Etiopía","Fiyi","Finlandia","Francia","Gabón","Gambia","Georgia","Alemania","Ghana","Grecia","Granada","Guatemala","Guinea","Guinea-Bisáu","Guyana","Haití","Honduras","Hungría","Islandia","India","Indonesia","Irán","Irak","Irlanda","Israel","Italia","Jamaica","Japón","Jordania","Kazajistán","Kenia","Kiribati","Kuwait","Kirguistán","Laos","Letonia","Líbano","Lesoto","Liberia","Libia","Liechtenstein","Lituania","Luxemburgo","Madagascar","Malaui","Malasia","Maldivas","Malí","Malta","Islas Marshall","Mauritania","Mauricio","México","Micronesia","Moldavia","Mónaco","Mongolia","Montenegro","Marruecos","Mozambique","Birmania","Namibia","Nauru","Nepal","Países Bajos","Nueva Zelanda","Nicaragua","Níger","Nigeria","Corea del Norte","Macedonia del Norte","Noruega","Omán","Pakistán","Palaos","Panamá","Papúa Nueva Guinea","Paraguay","Perú","Filipinas","Polonia","Portugal","Catar","Rumania","Rusia","Ruanda","San Cristóbal y Nieves","Santa Lucía","San Vicente y las Granadinas","Samoa","San Marino","Santo Tomé y Príncipe","Arabia Saudita","Senegal","Serbia","Seychelles","Sierra Leona","Singapur","Eslovaquia","Eslovenia","Islas Salomón","Somalia","Sudáfrica","Corea del Sur","Sudán del Sur","España","Sri Lanka","Sudán","Surinam","Suecia","Suiza","Siria","Tayikistán","Tanzania","Tailandia","Timor Oriental","Togo","Tonga","Trinidad y Tobago","Túnez","Turquía","Turkmenistán","Tuvalu","Uganda","Ucrania","Emiratos Árabes Unidos","Reino Unido","Estados Unidos","Uruguay","Uzbekistán","Vanuatu","Venezuela","Vietnam","Yemen","Zambia","Zimbabue"];
+  const TOTAL = countries.length;
+
+  const categories = [
+    {name:"Historias reales poco conocidas", guide:(p,c)=>`Busca un hecho real ocurrido en ${c||p}, poco viral, con un giro o final sorprendente: un incidente, una hazaña anónima, un error histórico con consecuencias grandes. Prioriza fuentes locales o de prensa histórica.`},
+    {name:"Misterios históricos", guide:(p,c)=>`Investiga sucesos sin resolver o teorías encontradas sobre algo ocurrido en ${c||p}: desapariciones, crímenes sin resolver, hallazgos arqueológicos sin explicación clara. Presenta las versiones existentes sin afirmar una sola verdad.`},
+    {name:"Cultura y curiosidades", guide:(p,c)=>`Si las otras categorías no dieron buen material, indaga curiosidades culturales de ${p}: tradiciones únicas, récords, particularidades sociales o cotidianas que sorprendan a alguien de fuera.`},
+    {name:"Grandes personajes", guide:(p,c)=>`Busca personajes históricos nacidos o fallecidos en ${c||p}: qué hicieron, por qué son relevantes hoy, y un dato poco conocido de su vida que funcione como "gancho" narrativo.`},
+    {name:"Leyendas y mitología", guide:(p,c)=>`Investiga leyendas o mitos asociados a ${c||p} o su región: el origen del relato, la versión más popular, y una curiosidad del folclore local que la mayoría desconoce.`}
+  ];
+
+  let usedCountries = [];
+  let history = [];
+  let selection = {pais:null, categoria:null, ciudad:null};
+  let cityCandidates = [];
+
+  const flapPais = document.getElementById('flap-pais');
+  const flapCat = document.getElementById('flap-ciudad') ? document.getElementById('flap-cat') : null;
+  const flapCiudad = document.getElementById('flap-ciudad');
+  const btnPais = document.getElementById('btn-pais');
+  const btnCat = document.getElementById('btn-cat');
+  const btnCiudad = document.getElementById('btn-ciudad');
+  const counterEl = document.getElementById('counter');
+  const guideEl = document.getElementById('guide');
+  const guideTextEl = document.getElementById('guide-text');
+  const cityInputControls = document.getElementById('city-input-controls');
+  const cityInput = document.getElementById('city-input');
+  const cityChips = document.getElementById('city-chips');
+  const historyToggle = document.getElementById('history-toggle');
+  const historyList = document.getElementById('history-list');
+  const btnReset = document.getElementById('btn-reset');
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function spinFlap(el, candidates, finalValue, onDone){
+    el.classList.remove('placeholder');
+    const seq = shuffle(candidates.length ? candidates : [finalValue]);
+    let i = 0;
+    let delay = 60;
+    const maxSteps = Math.max(10, Math.min(22, seq.length + 8));
+    function step(){
+      el.textContent = seq[i % seq.length];
+      el.classList.remove('flip'); void el.offsetWidth; el.classList.add('flip');
+      i++;
+      delay += 12;
+      if(i < maxSteps){
+        setTimeout(step, delay);
+      } else {
+        el.textContent = finalValue;
+        el.classList.remove('flip'); void el.offsetWidth; el.classList.add('flip');
+        if(onDone) setTimeout(onDone, 150);
+      }
+    }
+    step();
+  }
+
+  async function loadState(){
+    try{
+      const res = await window.storage.get('ruleta_state', false);
+      if(res && res.value){
+        const data = JSON.parse(res.value);
+        usedCountries = data.usedCountries || [];
+        history = data.history || [];
+      }
+    }catch(e){ /* no state yet */ }
+    renderCounter();
+    renderHistory();
+  }
+
+  async function saveState(){
+    try{
+      await window.storage.set('ruleta_state', JSON.stringify({usedCountries, history}), false);
+    }catch(e){ console.error('No se pudo guardar el estado', e); }
+  }
+
+  function renderCounter(){
+    counterEl.textContent = `${usedCountries.length} / ${TOTAL}`;
+  }
+
+  function renderHistory(){
+    if(!history.length){
+      historyList.innerHTML = '<div class="history-item">Aún no hay selecciones guardadas.</div>';
+      return;
+    }
+    historyList.innerHTML = history.slice().reverse().map(h =>
+      `<div class="history-item"><b>${h.pais}</b> — ${h.categoria} — ${h.ciudad || 'sin ciudad'} <span style="float:right;">${h.fecha}</span></div>`
+    ).join('');
+  }
+
+  btnPais.addEventListener('click', () => {
+    let available = countries.filter(c => !usedCountries.includes(c));
+    if(available.length === 0){
+      usedCountries = [];
+      available = countries.slice();
+    }
+    const finalCountry = available[Math.floor(Math.random()*available.length)];
+    btnPais.disabled = true;
+    btnCat.disabled = true;
+    btnCiudad.disabled = true;
+    guideEl.classList.remove('show');
+    flapCat.textContent = 'Pendiente'; flapCat.classList.add('placeholder');
+    flapCiudad.textContent = 'Pendiente'; flapCiudad.classList.add('placeholder');
+    cityInputControls.style.display = 'none';
+    cityCandidates = []; cityChips.innerHTML='';
+    selection.categoria = null; selection.ciudad = null;
+
+    spinFlap(flapPais, available, finalCountry, () => {
+      selection.pais = finalCountry;
+      usedCountries.push(finalCountry);
+      renderCounter();
+      saveState();
+      btnPais.disabled = false;
+      btnCat.disabled = false;
+    });
+  });
+
+  btnCat.addEventListener('click', () => {
+    const names = categories.map(c => c.name);
+    const finalCat = names[Math.floor(Math.random()*names.length)];
+    btnCat.disabled = true;
+    btnCiudad.disabled = true;
+    guideEl.classList.remove('show');
+    spinFlap(flapCat, names, finalCat, () => {
+      selection.categoria = finalCat;
+      cityInputControls.style.display = 'flex';
+      updateGuide();
+      btnCat.disabled = false;
+    });
+  });
+
+  cityInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' && cityInput.value.trim()){
+      const val = cityInput.value.trim();
+      cityCandidates.push(val);
+      renderChips();
+      cityInput.value = '';
+      btnCiudad.disabled = cityCandidates.length === 0;
+    }
+  });
+
+  function renderChips(){
+    cityChips.innerHTML = cityCandidates.map((c,idx) =>
+      `<span class="chip">${c} <button data-idx="${idx}">×</button></span>`
+    ).join('');
+    cityChips.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        cityCandidates.splice(parseInt(b.dataset.idx),1);
+        renderChips();
+        btnCiudad.disabled = cityCandidates.length === 0;
+      });
+    });
+  }
+
+  btnCiudad.addEventListener('click', () => {
+    if(cityCandidates.length === 0) return;
+    const finalCity = cityCandidates[Math.floor(Math.random()*cityCandidates.length)];
+    btnCiudad.disabled = true;
+    spinFlap(flapCiudad, cityCandidates, finalCity, () => {
+      selection.ciudad = finalCity;
+      updateGuide();
+      history.push({pais:selection.pais, categoria:selection.categoria, ciudad:selection.ciudad, fecha:new Date().toLocaleDateString('es-CO')});
+      saveState();
+      renderHistory();
+    });
+  });
+
+  function updateGuide(){
+    const catObj = categories.find(c => c.name === selection.categoria);
+    if(!catObj) return;
+    guideTextEl.textContent = catObj.guide(selection.pais, selection.ciudad);
+    guideEl.classList.add('show');
+  }
+
+  historyToggle.addEventListener('click', () => {
+    const showing = historyList.classList.toggle('show');
+    historyToggle.textContent = showing ? 'Ocultar historial ▴' : 'Ver historial ▾';
+  });
+
+  btnReset.addEventListener('click', () => {
+    if(!confirm('¿Reiniciar el conteo de países usados y el historial? Esta acción no se puede deshacer.')) return;
+    usedCountries = [];
+    history = [];
+    selection = {pais:null, categoria:null, ciudad:null};
+    cityCandidates = [];
+    flapPais.textContent = 'Pendiente'; flapPais.classList.add('placeholder');
+    flapCat.textContent = 'Pendiente'; flapCat.classList.add('placeholder');
+    flapCiudad.textContent = 'Pendiente'; flapCiudad.classList.add('placeholder');
+    cityInputControls.style.display = 'none';
+    cityChips.innerHTML = '';
+    btnCat.disabled = true;
+    btnCiudad.disabled = true;
+    guideEl.classList.remove('show');
+    renderCounter();
+    renderHistory();
+    saveState();
+  });
+
+  loadState();
+})();
+</script>
